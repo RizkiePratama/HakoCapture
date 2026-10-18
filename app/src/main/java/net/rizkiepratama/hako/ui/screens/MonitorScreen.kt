@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.StackedLineChart
@@ -48,7 +49,12 @@ private val AccentAmber = Color(0xFFFFC857)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MonitorScreen(permissionsGranted: Boolean, usbAttachVersion: Int, requestPermissions: () -> Unit) {
+fun MonitorScreen(
+    permissionsGranted: Boolean,
+    usbAttachVersion: Int,
+    requestPermissions: () -> Unit,
+    onBack: (() -> Unit)? = null
+) {
     var isRecording by remember { mutableStateOf(false) }
     var recordingSettings by remember { mutableStateOf(RecordingSettings()) }
     var scopeSettings by remember { mutableStateOf(ScopeVisibility()) }
@@ -256,7 +262,7 @@ fun MonitorScreen(permissionsGranted: Boolean, usbAttachVersion: Int, requestPer
                 onSettings = { showScopeSettings = true },
                 onHide = { scopesExpanded = false }, modifier = modifier)
         },
-        topBar = { TopBar(statusMessage, isCameraActive, currentCaptureMode?.label ?: "No signal", isLandscape, Modifier) },
+        topBar = { TopBar(statusMessage, isCameraActive, currentCaptureMode?.label ?: "No signal", isLandscape, Modifier, onBack) },
         controls = {
             BottomBar(
                 isRecording = isRecording,
@@ -292,15 +298,26 @@ fun MonitorScreen(permissionsGranted: Boolean, usbAttachVersion: Int, requestPer
 }
 
 @Composable
-private fun TopBar(statusMessage: String, isActive: Boolean, signalLabel: String, isLandscape: Boolean, modifier: Modifier) {
+private fun TopBar(
+    statusMessage: String,
+    isActive: Boolean,
+    signalLabel: String,
+    isLandscape: Boolean,
+    modifier: Modifier,
+    onBack: (() -> Unit)? = null
+) {
     Row(
         modifier
             .fillMaxWidth()
-            
             .background(if (isLandscape) Color.Transparent else Color(0xE6080A0D))
             .padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (onBack != null) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+            }
+        }
         Text("HAKO", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         Text(" / MONITOR", color = Color(0xFF89939D), style = MaterialTheme.typography.labelMedium)
         Spacer(Modifier.width(18.dp))

@@ -3,4 +3,7 @@
     <!-- USB Video Class (UVC) devices -->
     <usb-device class="239" subclass="2" /> <!-- Interface Association Descriptor -->
     <usb-device class="14" /> <!-- Video Class -->
+    <!-- Still Image / PTP / Sony PC Remote devices -->
+    <usb-device class="6" /> <!-- Still Image / PTP / MTP -->
+    <usb-device class="255" /> <!-- Vendor Specific -->
 </resources>

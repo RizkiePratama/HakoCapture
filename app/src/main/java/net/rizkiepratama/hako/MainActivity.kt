@@ -1,30 +1,39 @@
 package net.rizkiepratama.hako
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.usb.UsbManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import net.rizkiepratama.hako.ui.screens.ModeSelectorScreen
 import net.rizkiepratama.hako.ui.screens.MonitorScreen
+import net.rizkiepratama.hako.ui.screens.TetherScreen
 import net.rizkiepratama.hako.ui.theme.HakoCaptureTheme
+
+enum class AppMode {
+    SELECTOR,
+    MONITOR,
+    TETHER
+}
 
 class MainActivity : ComponentActivity() {
     private var permissionsGranted by mutableStateOf(false)
     private var usbAttachVersion by mutableIntStateOf(0)
+    private var currentMode by mutableStateOf(AppMode.SELECTOR)
 
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -41,7 +50,7 @@ class MainActivity : ComponentActivity() {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
         window.statusBarColor = android.graphics.Color.TRANSPARENT
-        
+
         checkPermissions()
 
         setContent {
@@ -50,7 +59,44 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MonitorScreen(permissionsGranted, usbAttachVersion, ::checkPermissions)
+                    val usbManager = remember { getSystemService(Context.USB_SERVICE) as UsbManager }
+                    val attachedDevices = remember(usbAttachVersion) {
+                        usbManager.deviceList.values.toList()
+                    }
+
+                    if (currentMode != AppMode.SELECTOR) {
+                        BackHandler {
+                            currentMode = AppMode.SELECTOR
+                        }
+                    }
+
+                    when (currentMode) {
+                        AppMode.SELECTOR -> {
+                            ModeSelectorScreen(
+                                permissionsGranted = permissionsGranted,
+                                attachedDevices = attachedDevices,
+                                onRequestPermissions = ::checkPermissions,
+                                onSelectMonitor = { currentMode = AppMode.MONITOR },
+                                onSelectTether = { currentMode = AppMode.TETHER }
+                            )
+                        }
+                        AppMode.MONITOR -> {
+                            MonitorScreen(
+                                permissionsGranted = permissionsGranted,
+                                usbAttachVersion = usbAttachVersion,
+                                requestPermissions = ::checkPermissions,
+                                onBack = { currentMode = AppMode.SELECTOR }
+                            )
+                        }
+                        AppMode.TETHER -> {
+                            TetherScreen(
+                                permissionsGranted = permissionsGranted,
+                                usbAttachVersion = usbAttachVersion,
+                                requestPermissions = ::checkPermissions,
+                                onBack = { currentMode = AppMode.SELECTOR }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -72,6 +118,6 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.action == android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED) usbAttachVersion++
+        if (intent.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) usbAttachVersion++
     }
 }
