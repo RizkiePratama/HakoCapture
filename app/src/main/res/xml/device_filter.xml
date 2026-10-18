@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- USB Video Class (UVC) devices -->
+    <usb-device class="239" subclass="2" /> <!-- Interface Association Descriptor -->
+    <usb-device class="14" /> <!-- Video Class -->
+</resources>
